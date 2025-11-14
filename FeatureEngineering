@@ -1,0 +1,135 @@
+# Import Libraries
+import pandas as pd
+import numpy as np
+from sklearn.datasets import load_iris
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.decomposiƟon import PCA
+from sklearn.feature_selecƟon import VarianceThreshold,
+SelectKBest, mutual_info_classif
+import matplotlib.pyplot as plt
+import seaborn as sns
+궯 Assignment: Data Preprocessing and Feature Engineering
+NAME : Rushikesh Hande
+PRN : 202401110056
+ROLL_NO : A3-44
+GIT HUB LINK:Https://github.com/Rushikeshaya/-
+import warnings
+warnings.filterwarnings("ignore")
+# ----------------------------------------------------------
+# 膆膊 Load and Explore Dataset
+# ----------------------------------------------------------
+iris = load_iris()
+df = pd.DataFrame(iris.data, columns=iris.feature_names)
+df['target'] = iris.target
+df['species'] = df['target'].apply(lambda x: iris.target_names[x])
+print("膆 Dataset Loaded Successfully")
+print("\nFirst 5 rows:\n", df.head())
+print("\nDataset Info:")
+print(df.info())
+print("\nMissing Values:\n", df.isnull().sum())
+# ----------------------------------------------------------
+# 膆膋 Handle Missing Data (Simulate and Impute)
+# ----------------------------------------------------------
+# Introduce some missing values arƟficially
+df_missing = df.copy()
+np.random.seed(42)
+missing_indices = np.random.choice(df_missing.index, 8,
+replace=False)
+df_missing.loc[missing_indices, 'sepal length (cm)'] = np.nan
+print("\nMissing values before imputaƟon:\n",
+df_missing.isnull().sum())
+# Mean ImputaƟon
+imputer = SimpleImputer(strategy='mean')
+df_missing[['sepal length (cm)']] =
+imputer.fit_transform(df_missing[['sepal length (cm)']])
+print("\nMissing values aŌer imputaƟon:\n",
+df_missing.isnull().sum())
+# ----------------------------------------------------------
+# 膆膌 Encode Categorical Variables
+# ----------------------------------------------------------
+label_encoder = LabelEncoder()
+df_missing['target_encoded'] =
+label_encoder.fit_transform(df_missing['species'])
+print("\nEncoded Target Values:\n", df_missing[['species',
+'target_encoded']].drop_duplicates())
+# ----------------------------------------------------------
+# 膆膍 Feature Scaling
+# ----------------------------------------------------------
+scaler = StandardScaler()
+numeric_features = iris.feature_names
+df_scaled = df_missing.copy()
+df_scaled[numeric_features] =
+scaler.fit_transform(df_scaled[numeric_features])
+print("\nScaled Feature Summary:\n", df_scaled.describe().T)
+# ----------------------------------------------------------
+# 膏膎 Feature ExtracƟon (PCA)
+# ----------------------------------------------------------
+pca = PCA(n_components=2)
+pca_features = pca.fit_transform(df_scaled[numeric_features])
+df_pca = pd.DataFrame(data=pca_features, columns=['PC1', 'PC2'])
+df_pca['species'] = df_scaled['species']
+# PCA Plot
+plt.figure(figsize=(7,5))
+sns.scaƩerplot(data=df_pca, x='PC1', y='PC2', hue='species', s=80)
+plt.Ɵtle('PCA: 2 Principal Components of Iris Dataset')
+plt.show()
+print("\nExplained Variance RaƟo:", pca.explained_variance_raƟo_)
+# ----------------------------------------------------------
+# 膆膐 Feature SelecƟon
+# ----------------------------------------------------------
+# Variance Threshold
+var_thresh = VarianceThreshold(threshold=0.0)
+var_thresh.fit(df_scaled[numeric_features])
+print("\nFeatures retained aŌer VarianceThreshold:\n",
+ np.array(numeric_features)[var_thresh.get_support()])
+# SelectKBest (Mutual InformaƟon)
+selector = SelectKBest(score_func=mutual_info_classif, k=2)
+X_new = selector.fit_transform(df_scaled[numeric_features],
+df_scaled['target_encoded'])
+selected_features =
+np.array(numeric_features)[selector.get_support()]
+print("\nTop 2 Features selected by SelectKBest:", selected_features)
+# ----------------------------------------------------------
+# 膆膑 CorrelaƟon Analysis
+# ----------------------------------------------------------
+plt.figure(figsize=(7,5))
+sns.heatmap(df_scaled[numeric_features].corr(), annot=True,
+cmap="coolwarm")
+plt.Ɵtle("Feature CorrelaƟon Heatmap")
+plt.show()
+# ----------------------------------------------------------
+# 膆膒 Summary of TransformaƟons
+# ----------------------------------------------------------
+print("\n=== Summary of TransformaƟons ===")
+print("1. Missing values handled with Mean ImputaƟon")
+print("2. Target variable encoded using LabelEncoder")
+print("3. Numeric features standardized using StandardScaler")
+print("4. Dimensionality reduced from 4 to 2 using PCA (95% variance
+retained)")
+print("5. Top 2 predicƟve features selected: Petal Length & Petal
+Width")
+print("6. CorrelaƟon shows strong link between petal length & petal
+width")
+# ----------------------------------------------------------
+# 膆膓 Ethical Discussion (Markdown SecƟon)
+# ----------------------------------------------------------
+from IPython.display import Markdown as md
+md("""
+### ������� Ethical Discussion
+While the Iris dataset is harmless, many real-world datasets contain
+sensiƟve features like **Gender**, **Age**, or **Marital Status**.
+Using such data to predict outcomes (like employee aƩriƟon or loan
+approval) can introduce **bias** and **discriminaƟon**.
+**Ways to miƟgate bias:**
+1. Exclude sensiƟve aƩributes during training.
+2. Use fairness-aware algorithms.
+3. Analyze model output for discriminaƟon.
+4. Document preprocessing and jusƟfy feature inclusion.
+Ensuring fairness and transparency is as important as achieving
+accuracy.
+""")
+# ----------------------------------------------------------
+# 膆 End of Notebook
+# ----------------------------------------------------------
+print("\n膆 Data Preprocessing Completed Successfully!") 
